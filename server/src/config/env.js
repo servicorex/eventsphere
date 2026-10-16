@@ -15,10 +15,16 @@ const requiredEnvVars = [
 
 export function validateEnv() {
   const missing = [];
-  for (const envVar of requiredEnvVars) {
-    if (!process.env[envVar] || process.env[envVar].trim() === '') {
-      missing.push(envVar);
+  if (!process.env.DATABASE_URL) {
+    for (const envVar of requiredEnvVars) {
+      if (!process.env[envVar] || process.env[envVar].trim() === '') {
+        missing.push(envVar);
+      }
     }
+  }
+
+  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.trim() === '') {
+    if (!missing.includes('SESSION_SECRET')) missing.push('SESSION_SECRET');
   }
 
   if (missing.length > 0) {
@@ -42,11 +48,14 @@ export const config = {
   sessionSecret: process.env.SESSION_SECRET,
   sessionMaxAge: parseInt(process.env.SESSION_MAX_AGE_MS || '86400000', 10), // 24 hours default
   db: {
+    connectionString: process.env.DATABASE_URL,
     host: process.env.PGHOST || 'localhost',
     port: parseInt(process.env.PGPORT || '5432', 10),
     user: process.env.PGUSER || 'postgres',
     password: process.env.PGPASSWORD || '',
     database: process.env.PGDATABASE || 'eventsphere_db',
-    ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : false
+    ssl: (process.env.PGSSL === 'true' || (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('sslmode=require')))
+      ? { rejectUnauthorized: false }
+      : false
   }
 };
