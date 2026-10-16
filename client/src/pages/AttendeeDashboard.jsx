@@ -7,7 +7,8 @@ import {
   CheckCircle2,
   Clock,
   Building2,
-  AlertTriangle
+  AlertTriangle,
+  UserCheck
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import { AlertBanner, EmptyState, LoadingSkeleton } from '../components/UIComponents';
@@ -64,7 +65,7 @@ export default function AttendeeDashboard() {
         attendee_name: attendeeName.trim(),
         attendee_email: attendeeEmail.trim()
       });
-      setMsg({ type: 'success', text: `Registration confirmed! Pass Generated: ${res.ticket.ticket_code}` });
+      setMsg({ type: 'success', text: `Registration confirmed! Digital Pass Code: ${res.ticket.ticket_code}` });
       await loadData();
     } catch (err) {
       setMsg({ type: 'error', text: err.message || 'Registration failed' });
@@ -85,7 +86,7 @@ export default function AttendeeDashboard() {
 
   return (
     <AppLayout
-      title="Attendee Operations & Digital Passes"
+      title="Attendee Hub & Digital Passes"
       subtitle="Register for upcoming college festivals, view digital tickets, and simulate gate entry"
     >
       <AlertBanner
@@ -94,19 +95,22 @@ export default function AttendeeDashboard() {
         onClose={() => setMsg(null)}
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.75rem', marginBottom: '2rem' }}>
         {/* Register Box */}
         <div className="card" style={{ margin: 0 }}>
           <div className="card-header">
-            <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Ticket size={20} color="#7C3AED" />
-              <span>Register for an Event</span>
-            </h3>
+            <div>
+              <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Ticket size={18} color="var(--color-purple)" />
+                <span>Register for an Event</span>
+              </h3>
+              <p className="card-subtitle">Generate an official barcode pass backed by PostgreSQL</p>
+            </div>
           </div>
           <div className="card-body">
             <form onSubmit={handleRegister}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <div style={{ marginBottom: '1.1rem' }}>
+                <label className="form-label">
                   Select Event *
                 </label>
                 <select
@@ -124,8 +128,8 @@ export default function AttendeeDashboard() {
                 </select>
               </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <div style={{ marginBottom: '1.1rem' }}>
+                <label className="form-label">
                   Attendee Full Name *
                 </label>
                 <input
@@ -138,8 +142,8 @@ export default function AttendeeDashboard() {
                 />
               </div>
 
-              <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label className="form-label">
                   Email Address *
                 </label>
                 <input
@@ -166,25 +170,28 @@ export default function AttendeeDashboard() {
         {/* Gate Check-in Box */}
         <div className="card" style={{ margin: 0 }}>
           <div className="card-header">
-            <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <QrCode size={20} color="#059669" />
-              <span>Gate Entry Scanner & Verification</span>
-            </h3>
+            <div>
+              <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <QrCode size={18} color="var(--color-success)" />
+                <span>Gate Entry Scanner & Verification</span>
+              </h3>
+              <p className="card-subtitle">Simulate barcode check-in and attendee badge validation</p>
+            </div>
           </div>
           <div className="card-body">
-            <p style={{ margin: '0 0 1.25rem 0', color: '#64748B', fontSize: '0.875rem' }}>
-              Enter or scan a digital pass code to verify the ticket against PostgreSQL records:
+            <p style={{ margin: '0 0 1.25rem 0', color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: 1.5 }}>
+              Enter or paste a digital pass code to verify the ticket against PostgreSQL records:
             </p>
 
             <form onSubmit={handleVerifyTicket}>
               <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                <label className="form-label">
                   Pass Code *
                 </label>
                 <input
                   type="text"
                   className="search-input"
-                  style={{ paddingLeft: '0.85rem', fontFamily: 'monospace', fontWeight: 700 }}
+                  style={{ paddingLeft: '0.85rem', fontFamily: 'var(--font-mono)', fontWeight: 700 }}
                   placeholder="e.g. TCK-1-XYZ123"
                   value={checkInCode}
                   onChange={(e) => setCheckInCode(e.target.value)}
@@ -195,16 +202,17 @@ export default function AttendeeDashboard() {
               <button
                 type="submit"
                 className="btn-primary"
-                style={{ width: '100%', justifyContent: 'center', backgroundColor: '#059669' }}
+                style={{ width: '100%', justifyContent: 'center', backgroundColor: 'var(--color-success)' }}
               >
-                Verify & Check-In
+                <UserCheck size={16} />
+                <span>Verify & Check-In</span>
               </button>
             </form>
 
             {checkInResult && (
               <div
                 className={`ui-alert ${checkInResult.success ? 'ui-alert-success' : 'ui-alert-error'}`}
-                style={{ marginTop: '1rem', marginBottom: 0 }}
+                style={{ marginTop: '1.25rem', marginBottom: 0 }}
               >
                 <span>{checkInResult.text}</span>
               </div>
@@ -216,7 +224,10 @@ export default function AttendeeDashboard() {
       {/* Ticket List */}
       <div className="card">
         <div className="card-header">
-          <h3 className="card-title">Issued Passes & Check-in Status ({tickets.length})</h3>
+          <div>
+            <h3 className="card-title">Issued Passes & Check-in Records</h3>
+            <p className="card-subtitle">Live registration registry ({tickets.length} attendees)</p>
+          </div>
         </div>
         {loading ? (
           <LoadingSkeleton lines={4} />
@@ -224,14 +235,14 @@ export default function AttendeeDashboard() {
           <EmptyState
             icon={Ticket}
             title="No passes issued yet"
-            description="Use the form above to register an attendee for an event."
+            description="Use the registration form above to issue a digital pass."
           />
         ) : (
           <div className="table-responsive">
             <table className="ui-table">
               <thead>
                 <tr>
-                  <th>Pass Code</th>
+                  <th>Digital Pass Code</th>
                   <th>Attendee Name</th>
                   <th>Event</th>
                   <th>Event Date</th>
@@ -241,8 +252,19 @@ export default function AttendeeDashboard() {
               <tbody>
                 {tickets.map((t) => (
                   <tr key={t.id}>
-                    <td style={{ fontFamily: 'monospace', fontWeight: 700, color: '#1D4ED8' }}>
-                      {t.ticket_code}
+                    <td>
+                      <span style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontWeight: 700,
+                        color: 'var(--color-brand)',
+                        background: 'var(--color-brand-subtle)',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: 'var(--radius-xs)',
+                        border: '1px solid var(--color-brand-border)',
+                        fontSize: '0.8rem'
+                      }}>
+                        {t.ticket_code}
+                      </span>
                     </td>
                     <td style={{ fontWeight: 600 }}>{t.attendee_name}</td>
                     <td>{t.event_title}</td>

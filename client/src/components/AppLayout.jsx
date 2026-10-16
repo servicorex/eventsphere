@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   ShieldCheck,
-  Repeat
+  Repeat,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import EventSphereLogo from './EventSphereLogo';
@@ -43,7 +44,6 @@ export default function AppLayout({ children, title, subtitle }) {
     }
   };
 
-  // Unified navigation items covering all modules
   const navItems = [
     { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
     { label: 'Events', path: '/events', icon: Calendar },
@@ -54,6 +54,13 @@ export default function AppLayout({ children, title, subtitle }) {
     { label: 'Vendor Portal', path: '/vendor/dashboard', icon: Briefcase }
   ];
 
+  const getInitials = (name) => {
+    if (!name) return 'ES';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  };
+
   return (
     <div className="app-layout">
       {/* Mobile Backdrop */}
@@ -62,7 +69,8 @@ export default function AppLayout({ children, title, subtitle }) {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.4)',
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(3px)',
             zIndex: 45
           }}
           onClick={() => setMobileOpen(false)}
@@ -75,6 +83,7 @@ export default function AppLayout({ children, title, subtitle }) {
           <NavLink to="/dashboard" className="sidebar-brand">
             <EventSphereLogo size={30} />
             <span>EventSphere</span>
+            <span className="sidebar-brand-badge">SaaS</span>
           </NavLink>
           <button
             type="button"
@@ -88,8 +97,8 @@ export default function AppLayout({ children, title, subtitle }) {
 
         {/* Navigation Links */}
         <nav className="sidebar-nav">
-          <div style={{ padding: '0 0.5rem 0.5rem 0.5rem', fontSize: '0.725rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Main Menu
+          <div className="sidebar-nav-section-title">
+            Operations Menu
           </div>
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -108,98 +117,70 @@ export default function AppLayout({ children, title, subtitle }) {
           })}
 
           {/* Quick Role Switcher */}
-          <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #E2E8F0', paddingLeft: '0.5rem', paddingRight: '0.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.725rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.65rem' }}>
-              <Repeat size={13} />
-              <span>Switch Role Login</span>
+          <div className="sidebar-switcher-panel">
+            <div className="sidebar-switcher-header">
+              <Repeat size={12} />
+              <span>Switch Active Persona</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <button
-                type="button"
-                disabled={switching || user?.role === 'ORGANIZER'}
-                onClick={() => handleQuickSwitch('organizer@eventsphere.com', 'OrganizerPass!2026')}
-                style={{
-                  textAlign: 'left',
-                  fontSize: '0.8rem',
-                  padding: '0.4rem 0.65rem',
-                  borderRadius: '6px',
-                  border: user?.role === 'ORGANIZER' ? '1.5px solid #059669' : '1px solid #E2E8F0',
-                  background: user?.role === 'ORGANIZER' ? '#ECFDF5' : '#FFFFFF',
-                  color: user?.role === 'ORGANIZER' ? '#065F46' : '#334155',
-                  cursor: user?.role === 'ORGANIZER' ? 'default' : 'pointer',
-                  fontWeight: user?.role === 'ORGANIZER' ? 700 : 500
-                }}
-              >
-                Organizer (Sarah) {user?.role === 'ORGANIZER' && '✓ Active'}
-              </button>
+            
+            <button
+              type="button"
+              disabled={switching || user?.role === 'ORGANIZER'}
+              onClick={() => handleQuickSwitch('organizer@eventsphere.com', 'OrganizerPass!2026')}
+              className={`sidebar-role-btn ${user?.role === 'ORGANIZER' ? 'active' : ''}`}
+            >
+              <span>Organizer (Sarah)</span>
+              {user?.role === 'ORGANIZER' && <span style={{ fontSize: '0.7rem' }}>✓ Active</span>}
+            </button>
 
-              <button
-                type="button"
-                disabled={switching || user?.role === 'ADMIN'}
-                onClick={() => handleQuickSwitch('admin@eventsphere.com', 'AdminSecurePass!2026')}
-                style={{
-                  textAlign: 'left',
-                  fontSize: '0.8rem',
-                  padding: '0.4rem 0.65rem',
-                  borderRadius: '6px',
-                  border: user?.role === 'ADMIN' ? '1.5px solid #1D4ED8' : '1px solid #E2E8F0',
-                  background: user?.role === 'ADMIN' ? '#EFF6FF' : '#FFFFFF',
-                  color: user?.role === 'ADMIN' ? '#1E40AF' : '#334155',
-                  cursor: user?.role === 'ADMIN' ? 'default' : 'pointer',
-                  fontWeight: user?.role === 'ADMIN' ? 700 : 500
-                }}
-              >
-                Admin (System) {user?.role === 'ADMIN' && '✓ Active'}
-              </button>
+            <button
+              type="button"
+              disabled={switching || user?.role === 'ADMIN'}
+              onClick={() => handleQuickSwitch('admin@eventsphere.com', 'AdminSecurePass!2026')}
+              className={`sidebar-role-btn ${user?.role === 'ADMIN' ? 'active' : ''}`}
+            >
+              <span>Admin (System)</span>
+              {user?.role === 'ADMIN' && <span style={{ fontSize: '0.7rem' }}>✓ Active</span>}
+            </button>
 
-              <button
-                type="button"
-                disabled={switching || user?.role === 'VENDOR'}
-                onClick={() => handleQuickSwitch('vendor@eventsphere.com', 'VendorPass!2026')}
-                style={{
-                  textAlign: 'left',
-                  fontSize: '0.8rem',
-                  padding: '0.4rem 0.65rem',
-                  borderRadius: '6px',
-                  border: user?.role === 'VENDOR' ? '1.5px solid #D97706' : '1px solid #E2E8F0',
-                  background: user?.role === 'VENDOR' ? '#FFFBEB' : '#FFFFFF',
-                  color: user?.role === 'VENDOR' ? '#92400E' : '#334155',
-                  cursor: user?.role === 'VENDOR' ? 'default' : 'pointer',
-                  fontWeight: user?.role === 'VENDOR' ? 700 : 500
-                }}
-              >
-                Vendor (Apex AV) {user?.role === 'VENDOR' && '✓ Active'}
-              </button>
+            <button
+              type="button"
+              disabled={switching || user?.role === 'VENDOR'}
+              onClick={() => handleQuickSwitch('vendor@eventsphere.com', 'VendorPass!2026')}
+              className={`sidebar-role-btn ${user?.role === 'VENDOR' ? 'active' : ''}`}
+            >
+              <span>Vendor (Apex AV)</span>
+              {user?.role === 'VENDOR' && <span style={{ fontSize: '0.7rem' }}>✓ Active</span>}
+            </button>
 
-              <button
-                type="button"
-                disabled={switching || user?.role === 'ATTENDEE'}
-                onClick={() => handleQuickSwitch('attendee@eventsphere.com', 'AttendeePass!2026')}
-                style={{
-                  textAlign: 'left',
-                  fontSize: '0.8rem',
-                  padding: '0.4rem 0.65rem',
-                  borderRadius: '6px',
-                  border: user?.role === 'ATTENDEE' ? '1.5px solid #7C3AED' : '1px solid #E2E8F0',
-                  background: user?.role === 'ATTENDEE' ? '#F5F3FF' : '#FFFFFF',
-                  color: user?.role === 'ATTENDEE' ? '#5B21B6' : '#334155',
-                  cursor: user?.role === 'ATTENDEE' ? 'default' : 'pointer',
-                  fontWeight: user?.role === 'ATTENDEE' ? 700 : 500
-                }}
-              >
-                Attendee (Alex) {user?.role === 'ATTENDEE' && '✓ Active'}
-              </button>
-            </div>
+            <button
+              type="button"
+              disabled={switching || user?.role === 'ATTENDEE'}
+              onClick={() => handleQuickSwitch('attendee@eventsphere.com', 'AttendeePass!2026')}
+              className={`sidebar-role-btn ${user?.role === 'ATTENDEE' ? 'active' : ''}`}
+            >
+              <span>Attendee (Alex)</span>
+              {user?.role === 'ATTENDEE' && <span style={{ fontSize: '0.7rem' }}>✓ Active</span>}
+            </button>
           </div>
         </nav>
 
         {/* User Footer */}
         <div className="sidebar-footer">
-          <div className="user-snippet">
-            <span className="user-snippet-name">{user?.name || 'User'}</span>
-            <span className="user-snippet-role" style={{ color: user?.role === 'ADMIN' ? '#1D4ED8' : user?.role === 'ORGANIZER' ? '#059669' : user?.role === 'VENDOR' ? '#D97706' : '#7C3AED' }}>
-              {user?.role}
-            </span>
+          <div className="user-profile-widget">
+            <div className="user-avatar-circle">
+              {getInitials(user?.name)}
+            </div>
+            <div className="user-snippet">
+              <span className="user-snippet-name">{user?.name || 'User'}</span>
+              <span className="user-snippet-role" style={{
+                color: user?.role === 'ADMIN' ? 'var(--color-brand)' : 
+                       user?.role === 'ORGANIZER' ? 'var(--color-success)' : 
+                       user?.role === 'VENDOR' ? 'var(--color-warning)' : 'var(--color-purple)'
+              }}>
+                {user?.role || 'Guest'}
+              </span>
+            </div>
           </div>
           <button
             type="button"
@@ -208,7 +189,7 @@ export default function AppLayout({ children, title, subtitle }) {
             title="Sign Out"
             aria-label="Sign Out"
           >
-            <LogOut size={18} />
+            <LogOut size={16} />
           </button>
         </div>
       </aside>
@@ -223,26 +204,17 @@ export default function AppLayout({ children, title, subtitle }) {
               onClick={() => setMobileOpen(true)}
               aria-label="Open navigation menu"
             >
-              <Menu size={22} />
+              <Menu size={20} />
             </button>
             <h1 className="topbar-title">{title || 'EventSphere'}</h1>
           </div>
 
           <div className="topbar-right">
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.35rem 0.75rem',
-              background: '#F1F5F9',
-              borderRadius: '9999px',
-              fontSize: '0.825rem',
-              color: '#334155'
-            }}>
-              <ShieldCheck size={16} color="#1D4ED8" />
-              <span>Logged in as:</span>
-              <strong style={{ color: '#0F172A' }}>{user?.name}</strong>
-              <span className={`badge badge-${user?.role?.toLowerCase() || 'active'}`} style={{ fontSize: '0.7rem' }}>
+            <div className="topbar-user-badge">
+              <ShieldCheck size={16} color="var(--color-brand)" />
+              <span style={{ color: 'var(--text-tertiary)' }}>Account:</span>
+              <strong style={{ color: 'var(--text-primary)' }}>{user?.name}</strong>
+              <span className={`badge badge-${user?.role?.toLowerCase() || 'admin'}`}>
                 {user?.role}
               </span>
             </div>

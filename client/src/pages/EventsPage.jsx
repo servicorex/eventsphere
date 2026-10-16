@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Calendar,
   Plus,
   Search,
-  Filter,
   Eye,
   Edit,
   Trash2,
   AlertTriangle,
-  CheckCircle2,
   Building2,
+  Clock,
+  Users,
   DollarSign
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
@@ -160,11 +160,12 @@ export default function EventsPage() {
         setBanner({ type: 'success', text: `Event "${payload.title}" updated successfully.` });
       } else {
         await eventsApi.create(payload);
-        setBanner({ type: 'success', text: `Event "${payload.title}" created successfully!` });
+        setBanner({ type: 'success', text: `Event "${payload.title}" scheduled successfully.` });
       }
       setIsFormOpen(false);
       await loadData();
     } catch (err) {
+      // Handles 409 conflict detection or capacity validation rejection
       setModalError(err.message || 'Operation failed.');
     } finally {
       setIsSubmitting(false);
@@ -175,7 +176,7 @@ export default function EventsPage() {
     if (!deleteEventTarget) return;
     try {
       await eventsApi.delete(deleteEventTarget.id);
-      setBanner({ type: 'success', text: `Event "${deleteEventTarget.title}" deleted and resources released.` });
+      setBanner({ type: 'success', text: `Event "${deleteEventTarget.title}" deleted.` });
       setDeleteEventTarget(null);
       await loadData();
     } catch (err) {
@@ -183,12 +184,12 @@ export default function EventsPage() {
     }
   };
 
-  // Filter & Search Logic
+  // Filter events by search & status
   const filteredEvents = events.filter((ev) => {
     const matchesSearch =
       ev.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ev.event_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ev.venue_name?.toLowerCase().includes(searchQuery.toLowerCase());
+      ev.venue_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ev.event_type?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = statusFilter === 'ALL' || ev.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -197,7 +198,7 @@ export default function EventsPage() {
   return (
     <AppLayout
       title="Event Management"
-      subtitle="Create, update, monitor events, and allocate venue & equipment resources"
+      subtitle="Create, update, and manage campus event schedules, venue reservations, and resources"
     >
       <AlertBanner
         message={banner?.text}
@@ -213,7 +214,7 @@ export default function EventsPage() {
             <input
               type="text"
               className="search-input"
-              placeholder="Search by event, type, or venue..."
+              placeholder="Search by event title, venue, or type..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -227,34 +228,29 @@ export default function EventsPage() {
             >
               <option value="ALL">All Statuses</option>
               <option value="Scheduled">Scheduled</option>
-              <option value="Completed">Completed</option>
               <option value="Draft">Draft</option>
               <option value="Cancelled">Cancelled</option>
             </select>
 
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={openCreateModal}
-            >
+            <button type="button" className="btn-primary" onClick={openCreateModal}>
               <Plus size={16} />
               <span>Create Event</span>
             </button>
           </div>
         </div>
 
-        {/* Events Table */}
+        {/* Content Table or Empty State */}
         {loading ? (
           <LoadingSkeleton lines={5} />
         ) : filteredEvents.length === 0 ? (
           <EmptyState
             icon={Calendar}
-            title="No events matching criteria"
-            description={searchQuery ? 'Try adjusting your search terms or filters.' : 'No events have been scheduled yet.'}
+            title="No events found"
+            description={searchQuery || statusFilter !== 'ALL' ? 'No events matched your filter criteria.' : 'Get started by creating your first event schedule.'}
             action={
               <button type="button" className="btn-primary" onClick={openCreateModal}>
                 <Plus size={16} />
-                <span>Create New Event</span>
+                <span>Create Event</span>
               </button>
             }
           />
@@ -263,12 +259,12 @@ export default function EventsPage() {
             <table className="ui-table">
               <thead>
                 <tr>
-                  <th>Event Name</th>
+                  <th>Event Details</th>
                   <th>Type</th>
-                  <th>Date & Time</th>
+                  <th>Schedule</th>
                   <th>Venue</th>
-                  <th>Attendees</th>
-                  <th>Allocated Resources</th>
+                  <th>Expected</th>
+                  <th>Allocated Units</th>
                   <th>Budget</th>
                   <th>Status</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
@@ -278,49 +274,68 @@ export default function EventsPage() {
                 {filteredEvents.map((ev) => (
                   <tr key={ev.id}>
                     <td>
-                      <Link
-                        to={`/events/${ev.id}`}
-                        style={{ fontWeight: 600, color: '#1D4ED8', textDecoration: 'none' }}
+                      <div
+                        style={{ fontWeight: 600, color: 'var(--color-brand)', cursor: 'pointer' }}
+                        onClick={() => navigate(`/events/${ev.id}`)}
                       >
                         {ev.title}
-                      </Link>
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                        ID #{ev.id}
+                      </div>
                     </td>
-                    <td>{ev.event_type}</td>
                     <td>
-                      <div>{ev.date}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                      <span style={{
+                        fontSize: '0.8rem',
+                        padding: '0.2rem 0.5rem',
+                        backgroundColor: 'var(--canvas-subtle)',
+                        borderRadius: 'var(--radius-sm)',
+                        color: 'var(--text-secondary)'
+                      }}>
+                        {ev.event_type}
+                      </span>
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <div style={{ fontWeight: 500 }}>{ev.date}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
                         {ev.start_time?.slice(0, 5)} – {ev.end_time?.slice(0, 5)}
                       </div>
                     </td>
                     <td>
-                      <div>{ev.venue_name || '—'}</div>
-                      {ev.venue_capacity && (
-                        <div style={{ fontSize: '0.725rem', color: '#64748B' }}>Cap: {ev.venue_capacity}</div>
+                      {ev.venue_name ? (
+                        <div>
+                          <div style={{ fontWeight: 500 }}>{ev.venue_name}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Cap: {ev.venue_capacity} seats</div>
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--text-quaternary)', fontStyle: 'italic', fontSize: '0.825rem' }}>Unassigned</span>
                       )}
                     </td>
                     <td>{ev.expected_attendees}</td>
                     <td>
                       {ev.allocated_resources && ev.allocated_resources.length > 0 ? (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
                           {ev.allocated_resources.map((r) => (
                             <span
                               key={r.id}
                               style={{
-                                background: '#F1F5F9',
+                                background: 'var(--canvas-subtle)',
+                                border: '1px solid var(--border-light)',
                                 padding: '0.15rem 0.45rem',
-                                borderRadius: 4,
-                                fontSize: '0.725rem'
+                                borderRadius: 'var(--radius-xs)',
+                                fontSize: '0.725rem',
+                                color: 'var(--text-secondary)'
                               }}
                             >
-                              {r.name}: <strong>{r.quantity}</strong>
+                              {r.name}: <strong style={{ color: 'var(--text-primary)' }}>{r.quantity}</strong>
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span style={{ color: '#94A3B8', fontSize: '0.8rem' }}>None</span>
+                        <span style={{ color: 'var(--text-quaternary)', fontSize: '0.8rem' }}>None</span>
                       )}
                     </td>
-                    <td>₹{parseFloat(ev.budget || 0).toLocaleString()}</td>
+                    <td style={{ fontWeight: 600 }}>₹{parseFloat(ev.budget || 0).toLocaleString()}</td>
                     <td>
                       <span className={`badge badge-${ev.status?.toLowerCase() || 'scheduled'}`}>
                         {ev.status}
@@ -366,7 +381,7 @@ export default function EventsPage() {
       <Modal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title={editingEvent ? 'Edit Event' : 'Schedule New Event'}
+        title={editingEvent ? 'Edit Event Schedule' : 'Schedule New Event'}
         maxWidth="640px"
       >
         {modalError && <AlertBanner type="error" message={modalError} />}
@@ -375,9 +390,9 @@ export default function EventsPage() {
           <div className="ui-alert ui-alert-warning" style={{ marginBottom: '1.25rem' }}>
             <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: 1 }} />
             <span>
-              <strong>Capacity Warning:</strong> Selected venue "{chosenVenue.name}" has a capacity of{' '}
-              {chosenVenue.capacity}, but you requested {formData.expected_attendees} attendees.
-              (The server will enforce this limit and reject the submission).
+              <strong>Capacity Limit Warning:</strong> Selected venue "{chosenVenue.name}" holds a max capacity of{' '}
+              {chosenVenue.capacity}, but you entered {formData.expected_attendees} attendees.
+              (PostgreSQL database will reject this entry upon submission).
             </span>
           </div>
         )}
@@ -385,7 +400,7 @@ export default function EventsPage() {
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div style={{ gridColumn: 'span 2' }}>
-              <label className="form-label" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label className="form-label">
                 Event Title *
               </label>
               <input
@@ -400,7 +415,7 @@ export default function EventsPage() {
             </div>
 
             <div>
-              <label className="form-label" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label className="form-label">
                 Event Type *
               </label>
               <select
@@ -418,7 +433,7 @@ export default function EventsPage() {
             </div>
 
             <div>
-              <label className="form-label" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label className="form-label">
                 Date *
               </label>
               <input
@@ -432,7 +447,7 @@ export default function EventsPage() {
             </div>
 
             <div>
-              <label className="form-label" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label className="form-label">
                 Start Time *
               </label>
               <input
@@ -446,7 +461,7 @@ export default function EventsPage() {
             </div>
 
             <div>
-              <label className="form-label" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label className="form-label">
                 End Time *
               </label>
               <input
@@ -459,27 +474,28 @@ export default function EventsPage() {
               />
             </div>
 
-            <div>
-              <label className="form-label" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Venue
+            <div style={{ gridColumn: 'span 2' }}>
+              <label className="form-label">
+                Venue Hall Selection *
               </label>
               <select
                 className="filter-select"
                 style={{ width: '100%' }}
                 value={formData.venue_id}
                 onChange={(e) => setFormData({ ...formData, venue_id: e.target.value })}
+                required
               >
-                <option value="">No Venue (Unassigned)</option>
+                <option value="">Select a venue...</option>
                 {venues.map((v) => (
                   <option key={v.id} value={v.id}>
-                    {v.name} (Cap: {v.capacity} | {v.location})
+                    {v.name} (Max Capacity: {v.capacity} seats, ₹{parseFloat(v.cost_per_day || 0).toLocaleString()}/day)
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="form-label" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label className="form-label">
                 Expected Attendees *
               </label>
               <input
@@ -491,11 +507,16 @@ export default function EventsPage() {
                 onChange={(e) => setFormData({ ...formData, expected_attendees: e.target.value })}
                 required
               />
+              {chosenVenue && (
+                <span className="form-hint">
+                  Venue max: {chosenVenue.capacity} seats
+                </span>
+              )}
             </div>
 
-            <div style={{ gridColumn: 'span 2' }}>
-              <label className="form-label" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Budget (₹)
+            <div>
+              <label className="form-label">
+                Budget (₹) *
               </label>
               <input
                 type="number"
@@ -504,87 +525,83 @@ export default function EventsPage() {
                 style={{ paddingLeft: '0.85rem' }}
                 value={formData.budget}
                 onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                required
               />
             </div>
-          </div>
 
-          {/* Resource Allocation Checklist (Creation mode) */}
-          {!editingEvent && resources.length > 0 && (
-            <div style={{ marginTop: '1.25rem', borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                Allocate Equipment & Staff (Auto-deducted from Inventory):
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                {resources.map((r) => (
-                  <div
-                    key={r.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      background: '#F8FAFC',
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: 6,
-                      border: '1px solid #E2E8F0'
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: '0.825rem', fontWeight: 600 }}>{r.name}</div>
-                      <div style={{ fontSize: '0.725rem', color: '#64748B' }}>
-                        Available: <strong>{r.available_quantity}</strong>
-                      </div>
+            {/* Optional Resource Allocation on Creation */}
+            {!editingEvent && resources.length > 0 && (
+              <div style={{ gridColumn: 'span 2', borderTop: '1px solid var(--border-light)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                <label className="form-label" style={{ marginBottom: '0.5rem' }}>
+                  Reserve Equipment & Staff Units (Optional)
+                </label>
+                <div style={{
+                  maxHeight: '130px',
+                  overflowY: 'auto',
+                  border: '1px solid var(--border-light)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '0.75rem',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '0.5rem',
+                  background: 'var(--canvas-subtle)'
+                }}>
+                  {resources.map((res) => (
+                    <div key={res.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        {res.name} (Avail: {res.available_quantity})
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        max={res.available_quantity}
+                        className="search-input"
+                        style={{ width: '65px', height: '30px', padding: '0 0.4rem', fontSize: '0.8rem' }}
+                        value={formData.selectedResources[res.id] || ''}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            selectedResources: {
+                              ...formData.selectedResources,
+                              [res.id]: e.target.value
+                            }
+                          })
+                        }
+                      />
                     </div>
-                    <input
-                      type="number"
-                      min="0"
-                      max={r.available_quantity}
-                      placeholder="0"
-                      style={{
-                        width: '56px',
-                        height: '30px',
-                        textAlign: 'center',
-                        borderRadius: 4,
-                        border: '1px solid #CBD5E1'
-                      }}
-                      value={formData.selectedResources[r.id] || ''}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setFormData((prev) => ({
-                          ...prev,
-                          selectedResources: { ...prev.selectedResources, [r.id]: val }
-                        }));
-                      }}
-                    />
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.75rem' }}>
             <button
               type="button"
               className="btn-secondary"
               onClick={() => setIsFormOpen(false)}
-              disabled={isSubmitting}
             >
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Saving...' : editingEvent ? 'Save Changes' : 'Confirm & Schedule Event'}
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={!!deleteEventTarget}
         onClose={() => setDeleteEventTarget(null)}
         onConfirm={handleConfirmDelete}
         title="Delete Event"
-        message={`Are you sure you want to delete "${deleteEventTarget?.title}"? All allocated resources will be automatically returned to inventory.`}
-        confirmText="Yes, Delete Event"
+        message={`Are you sure you want to delete "${deleteEventTarget?.title}"? Any reserved inventory or venue slots will be immediately released.`}
+        confirmText="Delete Event"
       />
     </AppLayout>
   );

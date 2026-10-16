@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Calendar,
   Clock,
@@ -8,10 +8,10 @@ import {
   DollarSign,
   Package,
   ArrowLeft,
-  Edit,
   Trash2,
-  CheckCircle2,
-  AlertTriangle
+  CalendarDays,
+  ShieldCheck,
+  MapPin
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import { ConfirmModal, AlertBanner, LoadingSkeleton } from '../components/UIComponents';
@@ -60,17 +60,17 @@ export default function EventDetailPage() {
   return (
     <AppLayout
       title={event ? event.title : 'Event Details'}
-      subtitle={event ? `${event.event_type} on ${event.date}` : 'Loading...'}
+      subtitle={event ? `${event.event_type} • Scheduled for ${event.date}` : 'Loading...'}
     >
-      <div style={{ marginBottom: '1.25rem' }}>
+      <div style={{ marginBottom: '1.5rem' }}>
         <button
           type="button"
           className="btn-secondary"
           onClick={() => navigate('/events')}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
+          style={{ height: '36px', fontSize: '0.825rem' }}
         >
           <ArrowLeft size={16} />
-          <span>Back to All Events</span>
+          <span>Back to Event Directory</span>
         </button>
       </div>
 
@@ -79,93 +79,117 @@ export default function EventDetailPage() {
       {loading ? (
         <LoadingSkeleton lines={6} />
       ) : event ? (
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
-          {/* Main Info */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(280px, 1fr)', gap: '1.75rem', alignItems: 'start' }}>
+          {/* Main Info Card */}
           <div className="card">
             <div className="card-header">
-              <h3 className="card-title">Event Information</h3>
+              <div>
+                <h3 className="card-title">Event Overview & Logistics</h3>
+                <p className="card-subtitle">Detailed schedule and venue capacity specifications</p>
+              </div>
               <span className={`badge badge-${event.status?.toLowerCase() || 'scheduled'}`}>
                 {event.status}
               </span>
             </div>
+
             <div className="card-body">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.75rem' }}>
-                <div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
+              {/* Highlight Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                <div style={{ background: 'var(--canvas-subtle)', border: '1px solid var(--border-light)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+                  <span style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Date & Schedule
                   </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
-                    <Calendar size={18} color="#1D4ED8" />
-                    <span style={{ fontWeight: 600 }}>{event.date}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.4rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    <Calendar size={18} color="var(--color-brand)" />
+                    <span>{event.date}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.35rem', color: '#475569', fontSize: '0.875rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                     <Clock size={16} />
                     <span>{event.start_time?.slice(0, 5)} – {event.end_time?.slice(0, 5)}</span>
                   </div>
                 </div>
 
-                <div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
-                    Venue Location
+                <div style={{ background: 'var(--canvas-subtle)', border: '1px solid var(--border-light)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+                  <span style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Campus Venue
                   </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
-                    <Building2 size={18} color="#1D4ED8" />
-                    <span style={{ fontWeight: 600 }}>{event.venue_name || 'Virtual / Unassigned'}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.4rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    <Building2 size={18} color="var(--color-brand)" />
+                    <span>{event.venue_name || 'Unassigned Venue'}</span>
                   </div>
                   {event.venue_location && (
-                    <div style={{ marginTop: '0.35rem', color: '#475569', fontSize: '0.85rem' }}>
-                      {event.venue_location} (Max: {event.venue_capacity} seats)
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.825rem' }}>
+                      <MapPin size={14} />
+                      <span>{event.venue_location} (Cap: {event.venue_capacity})</span>
                     </div>
                   )}
                 </div>
 
-                <div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
+                <div style={{ background: 'var(--canvas-subtle)', border: '1px solid var(--border-light)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+                  <span style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Expected Attendance
                   </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
-                    <Users size={18} color="#059669" />
-                    <span style={{ fontWeight: 600 }}>{event.expected_attendees} attendees</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.4rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    <Users size={18} color="var(--color-success)" />
+                    <span>{event.expected_attendees} Expected</span>
+                  </div>
+                  <div style={{ marginTop: '0.35rem', color: 'var(--text-tertiary)', fontSize: '0.825rem' }}>
+                    Within venue seating limits
                   </div>
                 </div>
 
-                <div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
-                    Financial Budget
+                <div style={{ background: 'var(--canvas-subtle)', border: '1px solid var(--border-light)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+                  <span style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Allocated Budget
                   </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
-                    <DollarSign size={18} color="#D97706" />
-                    <span style={{ fontWeight: 600 }}>₹{parseFloat(event.budget || 0).toLocaleString()}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    <DollarSign size={18} color="var(--color-warning)" />
+                    <span>₹{parseFloat(event.budget || 0).toLocaleString()}</span>
+                  </div>
+                  <div style={{ marginTop: '0.35rem', color: 'var(--text-tertiary)', fontSize: '0.825rem' }}>
+                    Total estimated spend
                   </div>
                 </div>
               </div>
 
-              {/* Allocated Resources */}
-              <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.85rem 0', color: '#0F172A' }}>
+              {/* Allocated Resources Inventory */}
+              <div>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.85rem 0', color: 'var(--text-primary)' }}>
                   Allocated Equipment & Staff
                 </h4>
                 {!event.allocated_resources || event.allocated_resources.length === 0 ? (
-                  <p style={{ color: '#64748B', fontSize: '0.875rem', fontStyle: 'italic', margin: 0 }}>
+                  <p style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem', fontStyle: 'italic', margin: 0 }}>
                     No inventory units or staff currently allocated to this event.
                   </p>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.75rem' }}>
                     {event.allocated_resources.map((r) => (
                       <div
                         key={r.id}
                         style={{
-                          background: '#F8FAFC',
-                          border: '1px solid #E2E8F0',
-                          padding: '0.75rem',
-                          borderRadius: '8px'
+                          background: 'var(--canvas-surface)',
+                          border: '1px solid var(--border-light)',
+                          padding: '0.85rem 1rem',
+                          borderRadius: 'var(--radius-md)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between'
                         }}
                       >
-                        <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{r.name}</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.775rem', color: '#64748B', marginTop: '0.25rem' }}>
-                          <span>Type: {r.type}</span>
-                          <span style={{ fontWeight: 700, color: '#1D4ED8' }}>Qty: {r.quantity}</span>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>{r.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{r.type}</div>
                         </div>
+                        <span style={{
+                          fontWeight: 700,
+                          fontSize: '0.85rem',
+                          color: 'var(--color-brand)',
+                          background: 'var(--color-brand-subtle)',
+                          padding: '0.2rem 0.55rem',
+                          borderRadius: 'var(--radius-sm)'
+                        }}>
+                          {r.quantity} units
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -174,7 +198,7 @@ export default function EventDetailPage() {
             </div>
           </div>
 
-          {/* Sidebar Actions */}
+          {/* Side Actions Panel */}
           <div>
             <div className="card">
               <div className="card-header">
@@ -187,17 +211,16 @@ export default function EventDetailPage() {
                   style={{ width: '100%', justifyContent: 'center' }}
                   onClick={() => navigate('/events')}
                 >
-                  <Edit size={16} />
-                  <span>Edit Details in Table</span>
+                  <span>Edit in Table View</span>
                 </button>
                 <button
                   type="button"
-                  className="btn-secondary"
-                  style={{ width: '100%', justifyContent: 'center', borderColor: '#FCA5A5', color: '#DC2626' }}
+                  className="btn-danger"
+                  style={{ width: '100%', justifyContent: 'center' }}
                   onClick={() => setIsDeleting(true)}
                 >
                   <Trash2 size={16} />
-                  <span>Cancel / Delete Event</span>
+                  <span>Delete / Cancel Event</span>
                 </button>
               </div>
             </div>
@@ -210,7 +233,7 @@ export default function EventDetailPage() {
         onClose={() => setIsDeleting(false)}
         onConfirm={handleDelete}
         title="Delete Event"
-        message={`Are you sure you want to delete "${event?.title}"? Any allocated equipment will be immediately returned to available stock.`}
+        message={`Are you sure you want to delete "${event?.title}"? All allocated equipment will be immediately returned to available stock.`}
         confirmText="Yes, Delete Event"
       />
     </AppLayout>

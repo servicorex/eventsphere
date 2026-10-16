@@ -8,7 +8,9 @@ import {
   Trash2,
   Share2,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import { Modal, ConfirmModal, AlertBanner, EmptyState, LoadingSkeleton } from '../components/UIComponents';
@@ -159,12 +161,12 @@ export default function ResourcesPage() {
       });
       setBanner({
         type: 'success',
-        text: `Successfully allocated ${reqQty} units of ${allocTargetResource.name} to event.`
+        text: `Allocated ${reqQty} unit(s) of "${allocTargetResource.name}" to event.`
       });
       setIsAllocateOpen(false);
       await loadData();
     } catch (err) {
-      setModalError(err.message || 'Allocation rejected by server.');
+      setModalError(err.message || 'Failed to allocate resource.');
     } finally {
       setIsSubmitting(false);
     }
@@ -185,7 +187,8 @@ export default function ResourcesPage() {
   const filteredResources = resources.filter((r) => {
     const matchesSearch =
       r.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.resource_code?.toLowerCase().includes(searchQuery.toLowerCase());
+      r.resource_code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.type?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesCategory = categoryFilter === 'ALL' || r.type === categoryFilter;
     return matchesSearch && matchesCategory;
@@ -193,8 +196,8 @@ export default function ResourcesPage() {
 
   return (
     <AppLayout
-      title="Resource Management"
-      subtitle="Track equipment, microphones, projectors, campus security, and shuttle buses"
+      title="Resource Inventory"
+      subtitle="Track physical equipment, technical kits, audio/visual units, and event staff"
     >
       <AlertBanner
         message={banner?.text}
@@ -203,13 +206,14 @@ export default function ResourcesPage() {
       />
 
       <div className="card">
+        {/* Search & Filter Toolbar */}
         <div className="filter-bar">
           <div className="search-box">
             <Search size={16} className="search-box-icon" />
             <input
               type="text"
               className="search-input"
-              placeholder="Search by resource name or code..."
+              placeholder="Search by resource name, type, or code..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -222,10 +226,9 @@ export default function ResourcesPage() {
               onChange={(e) => setCategoryFilter(e.target.value)}
             >
               <option value="ALL">All Categories</option>
-              <option value="Equipment">Equipment (Projectors, Mic, Sound)</option>
-              <option value="Staff">Staff (Security, Technicians)</option>
-              <option value="Transport">Transport (Buses, Vans)</option>
-              <option value="Other">Other</option>
+              <option value="Equipment">Equipment</option>
+              <option value="Staff">Staff</option>
+              <option value="Service">Service</option>
             </select>
 
             <button type="button" className="btn-primary" onClick={openCreateModal}>
@@ -235,13 +238,14 @@ export default function ResourcesPage() {
           </div>
         </div>
 
+        {/* Content Table or Empty State */}
         {loading ? (
           <LoadingSkeleton lines={4} />
         ) : filteredResources.length === 0 ? (
           <EmptyState
             icon={Package}
             title="No resources found"
-            description="Add projectors, sound systems, or personnel to build your inventory."
+            description="Add your first piece of equipment or staff role."
             action={
               <button type="button" className="btn-primary" onClick={openCreateModal}>
                 <Plus size={16} />
@@ -255,157 +259,186 @@ export default function ResourcesPage() {
               <thead>
                 <tr>
                   <th>Code</th>
-                  <th>Resource Name</th>
+                  <th>Item Name</th>
                   <th>Category</th>
                   <th>Total Stock</th>
-                  <th>Available Quantity</th>
-                  <th>Status</th>
+                  <th>Available Units</th>
+                  <th>Inventory Status</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredResources.map((r) => (
-                  <tr key={r.id}>
-                    <td style={{ fontWeight: 600, color: '#1D4ED8' }}>{r.resource_code || `R${r.id}`}</td>
-                    <td style={{ fontWeight: 600 }}>{r.name}</td>
-                    <td>
-                      <span style={{ background: '#F1F5F9', padding: '0.2rem 0.5rem', borderRadius: 4, fontSize: '0.75rem' }}>
-                        {r.type}
-                      </span>
-                    </td>
-                    <td style={{ fontWeight: 600 }}>{r.quantity}</td>
-                    <td>
-                      <strong style={{ color: r.available_quantity > 0 ? '#059669' : '#DC2626' }}>
-                        {r.available_quantity}
-                      </strong>{' '}
-                      <span style={{ color: '#64748B', fontSize: '0.8rem' }}>/ {r.quantity}</span>
-                    </td>
-                    <td>
-                      <span className={`badge badge-${r.status?.toLowerCase() || 'available'}`}>
-                        {r.status}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
-                        <button
-                          type="button"
-                          className="btn-icon"
-                          title="Allocate to Event"
-                          disabled={r.available_quantity <= 0}
-                          onClick={() => openAllocateModal(r)}
-                        >
-                          <Share2 size={16} color={r.available_quantity > 0 ? '#1D4ED8' : '#94A3B8'} />
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-icon"
-                          title="Edit Resource"
-                          onClick={() => openEditModal(r)}
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-icon danger"
-                          title="Delete Resource"
-                          onClick={() => setDeleteTarget(r)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filteredResources.map((r) => {
+                  const isDepleted = r.available_quantity <= 0;
+                  const isLow = r.available_quantity > 0 && r.available_quantity <= 3;
+                  return (
+                    <tr key={r.id}>
+                      <td>
+                        <span style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          padding: '0.15rem 0.45rem',
+                          background: 'var(--canvas-subtle)',
+                          border: '1px solid var(--border-light)',
+                          borderRadius: 'var(--radius-xs)',
+                          color: 'var(--text-secondary)'
+                        }}>
+                          {r.resource_code || `R-${r.id}`}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{r.name}</td>
+                      <td>
+                        <span style={{
+                          fontSize: '0.775rem',
+                          padding: '0.2rem 0.5rem',
+                          backgroundColor: 'var(--canvas-subtle)',
+                          borderRadius: 'var(--radius-sm)',
+                          color: 'var(--text-secondary)'
+                        }}>
+                          {r.type}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 500 }}>{r.quantity} units</td>
+                      <td>
+                        <strong style={{
+                          color: isDepleted ? 'var(--color-danger)' : isLow ? 'var(--color-warning)' : 'var(--color-success)',
+                          fontSize: '0.95rem'
+                        }}>
+                          {r.available_quantity}
+                        </strong>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginLeft: '0.25rem' }}>
+                          / {r.quantity}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge badge-${isDepleted ? 'depleted' : isLow ? 'maintenance' : 'available'}`}>
+                          {isDepleted ? 'Depleted' : isLow ? 'Low Stock' : 'In Stock'}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            style={{ height: '30px', padding: '0 0.65rem', fontSize: '0.775rem' }}
+                            title="Allocate to Event"
+                            disabled={isDepleted}
+                            onClick={() => openAllocateModal(r)}
+                          >
+                            <Share2 size={13} />
+                            <span>Allocate</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-icon"
+                            title="Edit Resource"
+                            onClick={() => openEditModal(r)}
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-icon danger"
+                            title="Delete Resource"
+                            onClick={() => setDeleteTarget(r)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
       </div>
 
-      {/* Create / Edit Resource Modal */}
+      {/* Create / Edit Modal */}
       <Modal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title={editingResource ? 'Edit Resource' : 'Add New Resource'}
-        maxWidth="500px"
+        title={editingResource ? 'Edit Resource' : 'Add Inventory Resource'}
+        maxWidth="480px"
       >
         {modalError && <AlertBanner type="error" message={modalError} />}
 
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Resource Code
-              </label>
-              <input
-                type="text"
-                className="search-input"
-                style={{ paddingLeft: '0.85rem' }}
-                value={formData.resource_code}
-                onChange={(e) => setFormData({ ...formData, resource_code: e.target.value })}
-                placeholder="e.g. R006"
-              />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
+              <div>
+                <label className="form-label">Code *</label>
+                <input
+                  type="text"
+                  className="search-input"
+                  style={{ paddingLeft: '0.85rem', fontFamily: 'var(--font-mono)' }}
+                  placeholder="e.g. R001"
+                  value={formData.resource_code}
+                  onChange={(e) => setFormData({ ...formData, resource_code: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Resource Name *</label>
+                <input
+                  type="text"
+                  className="search-input"
+                  style={{ paddingLeft: '0.85rem' }}
+                  placeholder="e.g. 4K Projector Rig"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
             </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Category *
-              </label>
-              <select
-                className="filter-select"
-                style={{ width: '100%' }}
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              >
-                <option value="Equipment">Equipment</option>
-                <option value="Staff">Staff</option>
-                <option value="Transport">Transport</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label className="form-label">Category *</label>
+                <select
+                  className="filter-select"
+                  style={{ width: '100%' }}
+                  value={formData.type}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                >
+                  <option value="Equipment">Equipment</option>
+                  <option value="Staff">Staff</option>
+                  <option value="Service">Service</option>
+                </select>
+              </div>
 
-            <div style={{ gridColumn: 'span 2' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Resource Name *
-              </label>
-              <input
-                type="text"
-                className="search-input"
-                style={{ paddingLeft: '0.85rem' }}
-                placeholder="e.g. 4K Video Projector"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
-
-            <div style={{ gridColumn: 'span 2' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Total Quantity *
-              </label>
-              <input
-                type="number"
-                min="0"
-                className="search-input"
-                style={{ paddingLeft: '0.85rem' }}
-                value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                required
-              />
+              <div>
+                <label className="form-label">Total Stock Quantity *</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="search-input"
+                  style={{ paddingLeft: '0.85rem' }}
+                  value={formData.quantity}
+                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                  required
+                />
+              </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.75rem' }}>
             <button
               type="button"
               className="btn-secondary"
               onClick={() => setIsFormOpen(false)}
-              disabled={isSubmitting}
             >
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : editingResource ? 'Save Changes' : 'Create Resource'}
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Saving...' : editingResource ? 'Save Changes' : 'Add to Inventory'}
             </button>
           </div>
         </form>
@@ -415,76 +448,87 @@ export default function ResourcesPage() {
       <Modal
         isOpen={isAllocateOpen}
         onClose={() => setIsAllocateOpen(false)}
-        title={`Allocate: ${allocTargetResource?.name}`}
-        maxWidth="480px"
+        title={`Allocate "${allocTargetResource?.name}"`}
+        maxWidth="460px"
       >
         {modalError && <AlertBanner type="error" message={modalError} />}
 
         <form onSubmit={handleAllocateSubmit}>
-          <p style={{ margin: '0 0 1rem 0', color: '#475569', fontSize: '0.875rem' }}>
-            Currently available in stock:{' '}
-            <strong style={{ color: '#059669' }}>{allocTargetResource?.available_quantity} units</strong>.
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <div style={{
+              background: 'var(--canvas-subtle)',
+              border: '1px solid var(--border-light)',
+              borderRadius: 'var(--radius-md)',
+              padding: '0.85rem 1rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Available in Stock:</span>
+              <strong style={{ fontSize: '1rem', color: 'var(--color-brand)' }}>
+                {allocTargetResource?.available_quantity} units
+              </strong>
+            </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-              Assign to Event *
-            </label>
-            <select
-              className="filter-select"
-              style={{ width: '100%' }}
-              value={allocEventId}
-              onChange={(e) => setAllocEventId(e.target.value)}
-              required
-            >
-              {events.map((ev) => (
-                <option key={ev.id} value={ev.id}>
-                  {ev.title} ({ev.date})
-                </option>
-              ))}
-            </select>
+            <div>
+              <label className="form-label">Select Scheduled Event *</label>
+              <select
+                className="filter-select"
+                style={{ width: '100%' }}
+                value={allocEventId}
+                onChange={(e) => setAllocEventId(e.target.value)}
+                required
+              >
+                {events.map((ev) => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.title} ({ev.date})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="form-label">Units to Reserve *</label>
+              <input
+                type="number"
+                min="1"
+                max={allocTargetResource?.available_quantity || 1}
+                className="search-input"
+                style={{ paddingLeft: '0.85rem' }}
+                value={allocQuantity}
+                onChange={(e) => setAllocQuantity(e.target.value)}
+                required
+              />
+            </div>
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-              Quantity to Allocate *
-            </label>
-            <input
-              type="number"
-              min="1"
-              max={allocTargetResource?.available_quantity || 1}
-              className="search-input"
-              style={{ paddingLeft: '0.85rem' }}
-              value={allocQuantity}
-              onChange={(e) => setAllocQuantity(e.target.value)}
-              required
-            />
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.75rem' }}>
             <button
               type="button"
               className="btn-secondary"
               onClick={() => setIsAllocateOpen(false)}
-              disabled={isSubmitting}
             >
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting || !allocTargetResource || allocTargetResource.available_quantity <= 0}
+            >
               {isSubmitting ? 'Allocating...' : 'Confirm Allocation'}
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* Delete Confirmation */}
+      {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
         title="Delete Resource"
-        message={`Are you sure you want to delete "${deleteTarget?.name}"?`}
-        confirmText="Yes, Delete"
+        message={`Are you sure you want to delete "${deleteTarget?.name}"? Any past allocation history will be unlinked.`}
+        confirmText="Delete Resource"
       />
     </AppLayout>
   );

@@ -5,11 +5,9 @@ import {
   Plus,
   DollarSign,
   FileText,
-  CheckCircle2,
-  AlertTriangle,
-  X,
   Building2,
-  Calendar
+  Calendar,
+  Briefcase
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import { Modal, AlertBanner, EmptyState, LoadingSkeleton } from '../components/UIComponents';
@@ -69,7 +67,7 @@ export default function VendorDashboard() {
         event_id: parseInt(form.event_id, 10),
         contract_amount: parseFloat(form.contract_amount) || 0
       });
-      setNotice({ type: 'success', text: 'Service agreement submitted and recorded successfully!' });
+      setNotice({ type: 'success', text: 'Service agreement recorded successfully!' });
       setIsModalOpen(false);
       await loadData();
     } catch (err) {
@@ -90,7 +88,7 @@ export default function VendorDashboard() {
   return (
     <AppLayout
       title="Vendor Service Portal"
-      subtitle="Manage audio/visual contracts, catering fulfillment, security agreements, and invoices"
+      subtitle="Fulfillment contracts, stage setups, audio/visual procurement, and billing status"
     >
       <AlertBanner
         message={notice?.text}
@@ -101,9 +99,9 @@ export default function VendorDashboard() {
       <div className="card">
         <div className="card-header">
           <div>
-            <h3 className="card-title">Active Service Agreements & Invoices</h3>
-            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.825rem', color: '#64748B' }}>
-              Service contracts linked to college festivals and conferences
+            <h3 className="card-title">Service Agreements & Fulfillment Contracts</h3>
+            <p className="card-subtitle">
+              Vendor procurement agreements linked to scheduled campus events
             </p>
           </div>
           <button
@@ -121,7 +119,7 @@ export default function VendorDashboard() {
         ) : contracts.length === 0 ? (
           <EmptyState
             icon={Truck}
-            title="No vendor agreements found"
+            title="No vendor agreements recorded"
             description="Log your first AV, catering, or stage management agreement."
             action={
               <button
@@ -142,7 +140,7 @@ export default function VendorDashboard() {
                   <th>Vendor Partner</th>
                   <th>Service Category</th>
                   <th>Assigned Event</th>
-                  <th>Agreed Amount</th>
+                  <th>Contract Value</th>
                   <th>Payment Status</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
@@ -150,11 +148,11 @@ export default function VendorDashboard() {
               <tbody>
                 {contracts.map((c) => (
                   <tr key={c.id}>
-                    <td style={{ fontWeight: 600, color: '#1D4ED8' }}>{c.vendor_name}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--color-brand)' }}>{c.vendor_name}</td>
                     <td>{c.service_type}</td>
                     <td>
-                      <div>{c.event_title}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748B' }}>Date: {c.event_date}</div>
+                      <div style={{ fontWeight: 500 }}>{c.event_title}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Date: {c.event_date}</div>
                     </td>
                     <td style={{ fontWeight: 700 }}>₹{parseFloat(c.contract_amount || 0).toLocaleString()}</td>
                     <td>
@@ -168,7 +166,7 @@ export default function VendorDashboard() {
                           <button
                             type="button"
                             className="btn-secondary"
-                            style={{ padding: '0.25rem 0.55rem', fontSize: '0.75rem', color: '#059669', borderColor: '#A7F3D0' }}
+                            style={{ height: '30px', padding: '0 0.65rem', fontSize: '0.75rem', color: 'var(--color-success)', borderColor: 'var(--color-success-border)' }}
                             onClick={() => handleUpdateStatus(c.id, 'Approved')}
                           >
                             Approve
@@ -178,7 +176,7 @@ export default function VendorDashboard() {
                           <button
                             type="button"
                             className="btn-secondary"
-                            style={{ padding: '0.25rem 0.55rem', fontSize: '0.75rem', color: '#1D4ED8', borderColor: '#BFDBFE' }}
+                            style={{ height: '30px', padding: '0 0.65rem', fontSize: '0.75rem', color: 'var(--color-brand)', borderColor: 'var(--color-brand-border)' }}
                             onClick={() => handleUpdateStatus(c.id, 'Paid')}
                           >
                             Mark Paid
@@ -198,17 +196,15 @@ export default function VendorDashboard() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Submit Service Agreement"
-        maxWidth="520px"
+        title="Submit Vendor Agreement"
+        maxWidth="500px"
       >
         {modalError && <AlertBanner type="error" message={modalError} />}
 
         <form onSubmit={handleCreate}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Vendor / Agency Name *
-              </label>
+              <label className="form-label">Vendor / Agency Name *</label>
               <input
                 type="text"
                 className="search-input"
@@ -220,9 +216,7 @@ export default function VendorDashboard() {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Assigned Event *
-              </label>
+              <label className="form-label">Assigned Event *</label>
               <select
                 className="filter-select"
                 style={{ width: '100%' }}
@@ -239,9 +233,7 @@ export default function VendorDashboard() {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Service Category *
-              </label>
+              <label className="form-label">Service Category *</label>
               <input
                 type="text"
                 className="search-input"
@@ -254,9 +246,7 @@ export default function VendorDashboard() {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Agreed Contract Amount (₹) *
-              </label>
+              <label className="form-label">Agreed Contract Amount (₹) *</label>
               <input
                 type="number"
                 min="0"
@@ -269,9 +259,7 @@ export default function VendorDashboard() {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Notes / Scope of Work
-              </label>
+              <label className="form-label">Scope of Work / Deliverables</label>
               <textarea
                 className="search-input"
                 style={{ padding: '0.65rem 0.85rem', height: '70px', resize: 'vertical' }}
@@ -281,7 +269,7 @@ export default function VendorDashboard() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.75rem' }}>
             <button
               type="button"
               className="btn-secondary"

@@ -1,25 +1,35 @@
-import React from 'react';
-import { X } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { X, AlertCircle, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 
-export function Modal({ isOpen, onClose, title, children, footer, maxWidth = '600px' }) {
+export function Modal({ isOpen, onClose, title, children, footer, maxWidth = '560px' }) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="dialog-backdrop" onClick={onClose} role="dialog" aria-modal="true">
+    <div className="dialog-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="dialog-heading">
       <div
         className="dialog-box"
         style={{ maxWidth }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="dialog-header">
-          <h3 className="dialog-title">{title}</h3>
+          <h3 id="dialog-heading" className="dialog-title">{title}</h3>
           <button
             type="button"
             className="btn-icon"
             onClick={onClose}
             aria-label="Close dialog"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
         <div className="dialog-body">
@@ -51,8 +61,7 @@ export function ConfirmModal({ isOpen, onClose, onConfirm, title, message, confi
           </button>
           <button
             type="button"
-            className="btn-primary"
-            style={isDanger ? { backgroundColor: '#DC2626' } : {}}
+            className={isDanger ? 'btn-danger' : 'btn-primary'}
             onClick={onConfirm}
           >
             {confirmText}
@@ -60,9 +69,24 @@ export function ConfirmModal({ isOpen, onClose, onConfirm, title, message, confi
         </>
       }
     >
-      <p style={{ margin: 0, color: '#475569', fontSize: '0.95rem', lineHeight: 1.5 }}>
-        {message}
-      </p>
+      <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
+        <div style={{
+          width: 36,
+          height: 36,
+          borderRadius: '50%',
+          backgroundColor: isDanger ? 'var(--color-danger-subtle)' : 'var(--color-warning-subtle)',
+          color: isDanger ? 'var(--color-danger)' : 'var(--color-warning)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0
+        }}>
+          {isDanger ? <AlertTriangle size={18} /> : <Info size={18} />}
+        </div>
+        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.5 }}>
+          {message}
+        </p>
+      </div>
     </Modal>
   );
 }
@@ -70,9 +94,11 @@ export function ConfirmModal({ isOpen, onClose, onConfirm, title, message, confi
 export function AlertBanner({ type = 'error', message, onClose }) {
   if (!message) return null;
   const className = type === 'success' ? 'ui-alert-success' : type === 'warning' ? 'ui-alert-warning' : 'ui-alert-error';
+  const Icon = type === 'success' ? CheckCircle2 : type === 'warning' ? AlertTriangle : AlertCircle;
 
   return (
     <div className={`ui-alert ${className}`} role="alert">
+      <Icon size={18} style={{ flexShrink: 0, marginTop: 1 }} />
       <span style={{ flex: 1 }}>{message}</span>
       {onClose && (
         <button
@@ -93,7 +119,7 @@ export function EmptyState({ icon: Icon, title, description, action }) {
     <div className="empty-state">
       {Icon && (
         <div className="empty-state-icon">
-          <Icon size={28} />
+          <Icon size={24} />
         </div>
       )}
       <h4 className="empty-state-title">{title || 'No records found'}</h4>
@@ -110,7 +136,7 @@ export function LoadingSkeleton({ lines = 4 }) {
         <div
           key={i}
           className="skeleton-line"
-          style={{ width: i === 0 ? '40%' : i === lines - 1 ? '60%' : '100%', height: i === 0 ? '24px' : '16px' }}
+          style={{ width: i === 0 ? '35%' : i === lines - 1 ? '55%' : '100%', height: i === 0 ? '22px' : '15px' }}
         />
       ))}
     </div>

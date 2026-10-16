@@ -9,11 +9,13 @@ import {
   ArrowRight,
   CalendarDays,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Sparkles,
+  Layers
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import { LoadingSkeleton, EmptyState, AlertBanner } from '../components/UIComponents';
-import { dashboardApi, eventsApi } from '../services/api';
+import { dashboardApi } from '../services/api';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -42,7 +44,7 @@ export default function DashboardPage() {
   return (
     <AppLayout
       title="System Overview"
-      subtitle="Real-time KPI metrics, scheduled events, and quick administrative actions"
+      subtitle="Operational KPI metrics, venue allocation, and upcoming schedule timetable"
     >
       <AlertBanner message={error} type="error" onClose={() => setError(null)} />
 
@@ -53,8 +55,8 @@ export default function DashboardPage() {
           {/* KPI Cards Grid */}
           <div className="kpi-grid">
             <div className="kpi-card">
-              <div className="kpi-icon" style={{ backgroundColor: '#EFF6FF', color: '#1D4ED8' }}>
-                <Calendar size={24} />
+              <div className="kpi-icon" style={{ backgroundColor: 'var(--color-brand-subtle)', color: 'var(--color-brand)' }}>
+                <Calendar size={22} />
               </div>
               <div className="kpi-meta">
                 <span className="kpi-value">{stats?.totalEvents ?? 0}</span>
@@ -63,8 +65,8 @@ export default function DashboardPage() {
             </div>
 
             <div className="kpi-card">
-              <div className="kpi-icon" style={{ backgroundColor: '#ECFDF5', color: '#059669' }}>
-                <Clock size={24} />
+              <div className="kpi-icon" style={{ backgroundColor: 'var(--color-success-subtle)', color: 'var(--color-success)' }}>
+                <Clock size={22} />
               </div>
               <div className="kpi-meta">
                 <span className="kpi-value">{stats?.upcomingEvents ?? 0}</span>
@@ -73,8 +75,8 @@ export default function DashboardPage() {
             </div>
 
             <div className="kpi-card">
-              <div className="kpi-icon" style={{ backgroundColor: '#FFFBEB', color: '#D97706' }}>
-                <Building2 size={24} />
+              <div className="kpi-icon" style={{ backgroundColor: 'var(--color-warning-subtle)', color: 'var(--color-warning)' }}>
+                <Building2 size={22} />
               </div>
               <div className="kpi-meta">
                 <span className="kpi-value">{stats?.availableVenues ?? 0}</span>
@@ -83,8 +85,8 @@ export default function DashboardPage() {
             </div>
 
             <div className="kpi-card">
-              <div className="kpi-icon" style={{ backgroundColor: '#F5F3FF', color: '#7C3AED' }}>
-                <Package size={24} />
+              <div className="kpi-icon" style={{ backgroundColor: 'var(--color-purple-subtle)', color: 'var(--color-purple)' }}>
+                <Package size={22} />
               </div>
               <div className="kpi-meta">
                 <span className="kpi-value">{stats?.totalResources ?? 0}</span>
@@ -93,10 +95,13 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Quick Actions Bar */}
+          {/* Quick Actions Panel */}
           <div className="card" style={{ marginBottom: '1.75rem' }}>
             <div className="card-header">
-              <h3 className="card-title">Quick Actions</h3>
+              <div>
+                <h3 className="card-title">Quick Actions</h3>
+                <p className="card-subtitle">Common administrative workflows and scheduling shortcuts</p>
+              </div>
             </div>
             <div className="card-body" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem' }}>
               <button
@@ -105,7 +110,7 @@ export default function DashboardPage() {
                 onClick={() => navigate('/events', { state: { openCreate: true } })}
               >
                 <Plus size={16} />
-                <span>Create New Event</span>
+                <span>Schedule New Event</span>
               </button>
               <button
                 type="button"
@@ -113,7 +118,7 @@ export default function DashboardPage() {
                 onClick={() => navigate('/venues', { state: { openCreate: true } })}
               >
                 <Building2 size={16} />
-                <span>Add Venue</span>
+                <span>Add Auditorium / Hall</span>
               </button>
               <button
                 type="button"
@@ -121,7 +126,7 @@ export default function DashboardPage() {
                 onClick={() => navigate('/resources', { state: { openCreate: true } })}
               >
                 <Package size={16} />
-                <span>Manage Resources</span>
+                <span>Stock Equipment</span>
               </button>
               <button
                 type="button"
@@ -138,15 +143,15 @@ export default function DashboardPage() {
           <div className="card">
             <div className="card-header">
               <div>
-                <h3 className="card-title">Upcoming & Planned Events</h3>
-                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.825rem', color: '#64748B' }}>
-                  Latest schedules recorded in PostgreSQL
+                <h3 className="card-title">Scheduled Events</h3>
+                <p className="card-subtitle">
+                  Synchronized bookings and hall reservations from PostgreSQL
                 </p>
               </div>
               <button
                 type="button"
                 className="btn-secondary"
-                style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}
+                style={{ fontSize: '0.8rem', height: '34px', padding: '0 0.85rem' }}
                 onClick={() => navigate('/events')}
               >
                 <span>View All Events</span>
@@ -158,7 +163,7 @@ export default function DashboardPage() {
               <table className="ui-table">
                 <thead>
                   <tr>
-                    <th>Event Name</th>
+                    <th>Event Title</th>
                     <th>Type</th>
                     <th>Date</th>
                     <th>Time Window</th>
@@ -173,8 +178,8 @@ export default function DashboardPage() {
                       <td colSpan={7}>
                         <EmptyState
                           icon={Calendar}
-                          title="No upcoming events"
-                          description="Get started by scheduling an event in the system."
+                          title="No scheduled events found"
+                          description="Get started by creating your first campus festival or conference."
                           action={
                             <button
                               type="button"
@@ -195,10 +200,12 @@ export default function DashboardPage() {
                         style={{ cursor: 'pointer' }}
                         onClick={() => navigate(`/events/${ev.id}`)}
                       >
-                        <td style={{ fontWeight: 600, color: '#1D4ED8' }}>{ev.title}</td>
-                        <td>{ev.event_type}</td>
-                        <td>{ev.date}</td>
-                        <td>{ev.start_time?.slice(0, 5)} – {ev.end_time?.slice(0, 5)}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--color-brand)' }}>{ev.title}</td>
+                        <td style={{ color: 'var(--text-secondary)' }}>{ev.event_type}</td>
+                        <td style={{ whiteSpace: 'nowrap' }}>{ev.date}</td>
+                        <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                          {ev.start_time?.slice(0, 5)} – {ev.end_time?.slice(0, 5)}
+                        </td>
                         <td>{ev.venue_name || 'Unassigned'}</td>
                         <td>{ev.expected_attendees}</td>
                         <td>

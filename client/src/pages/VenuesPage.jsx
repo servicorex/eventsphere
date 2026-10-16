@@ -96,7 +96,7 @@ export default function VenuesPage() {
 
     const cap = parseInt(formData.capacity, 10);
     if (isNaN(cap) || cap <= 0) {
-      setModalError('Capacity must be a positive number.');
+      setModalError('Capacity must be a positive integer.');
       return;
     }
 
@@ -150,7 +150,7 @@ export default function VenuesPage() {
   return (
     <AppLayout
       title="Venue Management"
-      subtitle="Configure event halls, auditoriums, seating capacities, and daily rates"
+      subtitle="Auditoriums, seminar halls, seating capacities, and daily tariff rates"
     >
       <AlertBanner
         message={banner?.text}
@@ -159,6 +159,7 @@ export default function VenuesPage() {
       />
 
       <div className="card">
+        {/* Search & Filter Toolbar */}
         <div className="filter-bar">
           <div className="search-box">
             <Search size={16} className="search-box-icon" />
@@ -190,6 +191,7 @@ export default function VenuesPage() {
           </div>
         </div>
 
+        {/* Content Table or Empty State */}
         {loading ? (
           <LoadingSkeleton lines={4} />
         ) : filteredVenues.length === 0 ? (
@@ -211,28 +213,52 @@ export default function VenuesPage() {
                 <tr>
                   <th>Code</th>
                   <th>Venue Name</th>
-                  <th>Location</th>
-                  <th>Capacity</th>
-                  <th>Status</th>
-                  <th>Cost / Day</th>
+                  <th>Campus Location</th>
+                  <th>Max Capacity</th>
+                  <th>Daily Tariff</th>
+                  <th>Availability</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredVenues.map((v) => (
                   <tr key={v.id}>
-                    <td style={{ fontWeight: 600, color: '#1D4ED8' }}>{v.venue_code || `V${v.id}`}</td>
-                    <td style={{ fontWeight: 600 }}>{v.name}</td>
-                    <td>{v.location}</td>
                     <td>
-                      <span style={{ fontWeight: 600 }}>{v.capacity?.toLocaleString()}</span> seats
+                      <span style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        padding: '0.15rem 0.45rem',
+                        background: 'var(--canvas-subtle)',
+                        border: '1px solid var(--border-light)',
+                        borderRadius: 'var(--radius-xs)',
+                        color: 'var(--text-secondary)'
+                      }}>
+                        {v.venue_code || `V-${v.id}`}
+                      </span>
+                    </td>
+                    <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{v.name}</td>
+                    <td style={{ color: 'var(--text-secondary)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <MapPin size={14} color="var(--text-tertiary)" />
+                        <span>{v.location}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600 }}>
+                        <Users size={14} color="var(--color-brand)" />
+                        <span>{v.capacity} seats</span>
+                      </div>
+                    </td>
+                    <td style={{ fontWeight: 600 }}>
+                      ₹{parseFloat(v.cost_per_day || 0).toLocaleString()}
+                      <span style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-tertiary)' }}>/day</span>
                     </td>
                     <td>
                       <span className={`badge badge-${v.availability?.toLowerCase() || 'available'}`}>
                         {v.availability}
                       </span>
                     </td>
-                    <td>₹{parseFloat(v.cost_per_day || 0).toLocaleString()}</td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
                         <button
@@ -261,33 +287,99 @@ export default function VenuesPage() {
         )}
       </div>
 
-      {/* Venue Modal */}
+      {/* Create / Edit Modal */}
       <Modal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title={editingVenue ? 'Edit Venue' : 'Add New Venue'}
+        title={editingVenue ? 'Edit Venue Details' : 'Add New Venue'}
         maxWidth="520px"
       >
         {modalError && <AlertBanner type="error" message={modalError} />}
 
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
+              <div>
+                <label className="form-label">
+                  Code *
+                </label>
+                <input
+                  type="text"
+                  className="search-input"
+                  style={{ paddingLeft: '0.85rem', fontFamily: 'var(--font-mono)' }}
+                  placeholder="e.g. V001"
+                  value={formData.venue_code}
+                  onChange={(e) => setFormData({ ...formData, venue_code: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="form-label">
+                  Venue Name *
+                </label>
+                <input
+                  type="text"
+                  className="search-input"
+                  style={{ paddingLeft: '0.85rem' }}
+                  placeholder="e.g. Main Auditorium Hall A"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Venue Code
+              <label className="form-label">
+                Campus Location / Building *
               </label>
               <input
                 type="text"
                 className="search-input"
                 style={{ paddingLeft: '0.85rem' }}
-                value={formData.venue_code}
-                onChange={(e) => setFormData({ ...formData, venue_code: e.target.value })}
-                placeholder="e.g. V005"
+                placeholder="e.g. North Campus, Block 4, 2nd Floor"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                required
               />
             </div>
 
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label className="form-label">
+                  Maximum Seating Capacity *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  className="search-input"
+                  style={{ paddingLeft: '0.85rem' }}
+                  value={formData.capacity}
+                  onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                  required
+                />
+                <span className="form-hint">Enforced against expected attendees</span>
+              </div>
+
+              <div>
+                <label className="form-label">
+                  Cost per Day (₹) *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className="search-input"
+                  style={{ paddingLeft: '0.85rem' }}
+                  value={formData.cost_per_day}
+                  onChange={(e) => setFormData({ ...formData, cost_per_day: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label className="form-label">
                 Availability Status *
               </label>
               <select
@@ -296,96 +388,40 @@ export default function VenuesPage() {
                 value={formData.availability}
                 onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
               >
-                <option value="Available">Available</option>
-                <option value="Booked">Booked</option>
-                <option value="Maintenance">Maintenance</option>
+                <option value="Available">Available for Booking</option>
+                <option value="Booked">Reserved / Booked</option>
+                <option value="Maintenance">Under Maintenance</option>
               </select>
-            </div>
-
-            <div style={{ gridColumn: 'span 2' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Venue Name *
-              </label>
-              <input
-                type="text"
-                className="search-input"
-                style={{ paddingLeft: '0.85rem' }}
-                placeholder="e.g. Main Auditorium"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
-
-            <div style={{ gridColumn: 'span 2' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Location *
-              </label>
-              <input
-                type="text"
-                className="search-input"
-                style={{ paddingLeft: '0.85rem' }}
-                placeholder="e.g. North Campus, Block B"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                required
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Seating Capacity *
-              </label>
-              <input
-                type="number"
-                min="1"
-                className="search-input"
-                style={{ paddingLeft: '0.85rem' }}
-                value={formData.capacity}
-                onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                required
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Cost Per Day (₹)
-              </label>
-              <input
-                type="number"
-                min="0"
-                className="search-input"
-                style={{ paddingLeft: '0.85rem' }}
-                value={formData.cost_per_day}
-                onChange={(e) => setFormData({ ...formData, cost_per_day: e.target.value })}
-              />
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.75rem' }}>
             <button
               type="button"
               className="btn-secondary"
               onClick={() => setIsFormOpen(false)}
-              disabled={isSubmitting}
             >
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : editingVenue ? 'Save Changes' : 'Create Venue'}
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Saving...' : editingVenue ? 'Update Venue' : 'Create Venue'}
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* Delete Confirmation */}
+      {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
         title="Delete Venue"
-        message={`Are you sure you want to delete venue "${deleteTarget?.name}"?`}
-        confirmText="Yes, Delete"
+        message={`Are you sure you want to delete "${deleteTarget?.name}"? If there are active events booked in this venue, the deletion will be rejected.`}
+        confirmText="Delete Venue"
       />
     </AppLayout>
   );

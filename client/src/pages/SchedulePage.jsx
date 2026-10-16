@@ -3,12 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   CalendarDays,
   Search,
-  Filter,
   Clock,
-  Building2,
-  Users,
   Eye,
-  Calendar
+  Calendar,
+  Building2,
+  Users
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import { AlertBanner, EmptyState, LoadingSkeleton } from '../components/UIComponents';
@@ -63,7 +62,7 @@ export default function SchedulePage() {
   return (
     <AppLayout
       title="Event Schedule"
-      subtitle="Chronological timetable of scheduled events and reserved campus venues"
+      subtitle="Chronological timetable of scheduled campus events, conferences, and venue bookings"
     >
       <AlertBanner message={error} type="error" onClose={() => setError(null)} />
 
@@ -75,15 +74,15 @@ export default function SchedulePage() {
             <input
               type="text"
               className="search-input"
-              placeholder="Filter schedule by event or venue..."
+              placeholder="Search schedule by title or venue..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}>
-              <span style={{ color: '#64748B', fontWeight: 600 }}>Filter by Date:</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.825rem' }}>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Filter Date:</span>
               <input
                 type="date"
                 className="search-input"
@@ -95,7 +94,7 @@ export default function SchedulePage() {
                 <button
                   type="button"
                   className="btn-secondary"
-                  style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                  style={{ height: '40px', padding: '0 0.75rem', fontSize: '0.8rem' }}
                   onClick={() => setDateFilter('')}
                 >
                   Clear Date
@@ -105,34 +104,38 @@ export default function SchedulePage() {
           </div>
         </div>
 
+        {/* Schedule Timetable Groups */}
         {loading ? (
           <LoadingSkeleton lines={5} />
         ) : sortedDates.length === 0 ? (
           <EmptyState
             icon={CalendarDays}
             title="No events scheduled"
-            description={dateFilter || searchQuery ? 'No events match the selected schedule filters.' : 'There are currently no events in the system.'}
+            description={dateFilter || searchQuery ? 'No events match the selected schedule filters.' : 'There are currently no events registered in the system.'}
           />
         ) : (
-          <div className="card-body" style={{ padding: '1.25rem 1.5rem' }}>
+          <div className="card-body" style={{ padding: '1.5rem' }}>
             {sortedDates.map((dateKey) => (
-              <div key={dateKey} style={{ marginBottom: '1.75rem' }}>
+              <div key={dateKey} style={{ marginBottom: '2rem' }}>
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 0.75rem',
-                  background: '#F1F5F9',
-                  borderRadius: '6px',
+                  justifyContent: 'space-between',
+                  padding: '0.6rem 0.95rem',
+                  background: 'var(--canvas-subtle)',
+                  border: '1px solid var(--border-light)',
+                  borderRadius: 'var(--radius-md)',
                   fontWeight: 700,
-                  fontSize: '0.925rem',
-                  color: '#1E293B',
+                  fontSize: '0.9rem',
+                  color: 'var(--text-primary)',
                   marginBottom: '0.75rem'
                 }}>
-                  <Calendar size={18} color="#1D4ED8" />
-                  <span>{dateKey}</span>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#64748B' }}>
-                    ({groupedByDate[dateKey].length} {groupedByDate[dateKey].length === 1 ? 'event' : 'events'})
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Calendar size={16} color="var(--color-brand)" />
+                    <span>{dateKey}</span>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-tertiary)' }}>
+                    {groupedByDate[dateKey].length} {groupedByDate[dateKey].length === 1 ? 'Booking' : 'Bookings'}
                   </span>
                 </div>
 
@@ -143,7 +146,7 @@ export default function SchedulePage() {
                         <th>Time Window</th>
                         <th>Event Title</th>
                         <th>Category</th>
-                        <th>Venue</th>
+                        <th>Assigned Venue</th>
                         <th>Expected Attendees</th>
                         <th>Status</th>
                         <th style={{ textAlign: 'right' }}>Details</th>
@@ -152,15 +155,34 @@ export default function SchedulePage() {
                     <tbody>
                       {groupedByDate[dateKey].map((ev) => (
                         <tr key={ev.id}>
-                          <td style={{ fontWeight: 600, color: '#1D4ED8', whiteSpace: 'nowrap' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                              <Clock size={15} />
+                          <td style={{ fontWeight: 600, color: 'var(--color-brand)', whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <Clock size={14} />
                               <span>{ev.start_time?.slice(0, 5)} – {ev.end_time?.slice(0, 5)}</span>
                             </div>
                           </td>
                           <td style={{ fontWeight: 600 }}>{ev.title}</td>
-                          <td>{ev.event_type}</td>
-                          <td>{ev.venue_name || 'Unassigned Venue'}</td>
+                          <td>
+                            <span style={{
+                              fontSize: '0.75rem',
+                              padding: '0.15rem 0.45rem',
+                              backgroundColor: 'var(--canvas-subtle)',
+                              borderRadius: 'var(--radius-xs)',
+                              color: 'var(--text-secondary)'
+                            }}>
+                              {ev.event_type}
+                            </span>
+                          </td>
+                          <td>
+                            {ev.venue_name ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <Building2 size={14} color="var(--text-tertiary)" />
+                                <span>{ev.venue_name}</span>
+                              </div>
+                            ) : (
+                              <span style={{ color: 'var(--text-quaternary)', fontStyle: 'italic', fontSize: '0.8rem' }}>Unassigned</span>
+                            )}
+                          </td>
                           <td>{ev.expected_attendees}</td>
                           <td>
                             <span className={`badge badge-${ev.status?.toLowerCase() || 'scheduled'}`}>

@@ -48,7 +48,7 @@ export default function LoginPage() {
       email: 'admin@eventsphere.com',
       pass: 'AdminSecurePass!2026',
       icon: ShieldCheck,
-      color: '#1D4ED8',
+      color: '#2563EB',
       desc: 'System governance, database metrics & venues'
     },
     {
@@ -57,7 +57,7 @@ export default function LoginPage() {
       pass: 'VendorPass!2026',
       icon: Briefcase,
       color: '#D97706',
-      desc: 'Service contracts, invoices & equipment delivery'
+      desc: 'Service contracts, invoices & delivery'
     },
     {
       role: 'Attendee',
@@ -65,7 +65,7 @@ export default function LoginPage() {
       pass: 'AttendeePass!2026',
       icon: Ticket,
       color: '#7C3AED',
-      desc: 'Register for events, passes & gate QR check-in'
+      desc: 'Register for events, passes & QR check-in'
     }
   ];
 
@@ -131,7 +131,7 @@ export default function LoginPage() {
     <div className="login-container">
       <div className="login-bg-decor" />
 
-      <div className="login-wrapper" style={{ maxWidth: '1240px' }}>
+      <div className="login-wrapper">
         {/* Left Branding Showcase */}
         <section className="login-brand-panel" aria-label="About EventSphere">
           <div className="brand-badge">
@@ -144,51 +144,51 @@ export default function LoginPage() {
           </h1>
 
           <p className="brand-description">
-            One unified, continuous portal connecting Organizers, Administrators, Vendors, 
+            A cohesive event operations platform connecting Organizers, Administrators, Vendors, 
             and Attendees with real-time venue scheduling and inventory allocation.
           </p>
 
           {/* 1-Click Role Logins */}
           <div style={{ marginTop: '0.5rem' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#93C5FD' }}>
-              Quick 1-Click Logins for Every Role:
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#93C5FD' }}>
+              One-Click Persona Access
             </span>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.65rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.75rem', marginTop: '0.75rem' }}>
               {demoAccounts.map((d) => {
                 const Icon = d.icon;
                 return (
                   <button
                     key={d.role}
                     type="button"
-                    onClick={() => handleQuickLogin(d)}
                     disabled={isLoading}
+                    onClick={() => handleQuickLogin(d)}
                     style={{
                       display: 'flex',
                       flexDirection: 'column',
-                      textAlign: 'left',
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      borderRadius: '10px',
-                      padding: '0.75rem',
+                      alignItems: 'flex-start',
+                      padding: '0.75rem 0.95rem',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: 'var(--radius-md)',
                       color: '#FFFFFF',
+                      textAlign: 'left',
                       cursor: 'pointer',
-                      transition: 'all 150ms ease',
-                      backdropFilter: 'blur(8px)'
+                      transition: 'all 180ms ease'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.16)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.35)';
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.2rem' }}>
-                      <span style={{ color: d.color, display: 'flex' }}><Icon size={16} /></span>
-                      <strong style={{ fontSize: '0.9rem' }}>{d.role}</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', marginBottom: '0.25rem' }}>
+                      <Icon size={16} color={d.color} />
+                      <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{d.role}</span>
                     </div>
-                    <span style={{ fontSize: '0.725rem', color: '#CBD5E1', lineHeight: 1.3 }}>
+                    <span style={{ fontSize: '0.725rem', color: '#94A3B8', lineHeight: 1.35 }}>
                       {d.desc}
                     </span>
                   </button>
@@ -198,116 +198,103 @@ export default function LoginPage() {
           </div>
         </section>
 
-        {/* Right Authentication Card */}
+        {/* Right Form Card */}
         <div className="login-card-container">
-          <main className="login-card" id="login-form-card">
-            <header className="login-header">
+          <div className="login-card">
+            <div className="login-header">
               <div className="login-header-logo">
-                <EventSphereLogo size={34} />
+                <EventSphereLogo size={32} />
               </div>
               <h2 className="login-title">Sign in to EventSphere</h2>
-              <p className="login-subtitle">Enter your credentials or choose a role on the left</p>
-            </header>
+              <p className="login-subtitle">Enter your institutional credentials to continue</p>
+            </div>
 
-            {/* Global API Error Alert */}
+            {/* Error Banner */}
             {apiError && (
-              <div className="alert-banner alert-error" role="alert" aria-live="polite">
-                <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+              <div className="ui-alert ui-alert-error" style={{ marginBottom: '1.25rem' }}>
+                <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 1 }} />
                 <span>{apiError}</span>
               </div>
             )}
 
             <form onSubmit={handleSubmit} noValidate>
-              {/* Email Input */}
+              {/* Email */}
               <div className="form-group">
-                <label htmlFor="login-email" className="form-label">
-                  Email Address
+                <label className="form-label" htmlFor="email-input">
+                  Work Email Address
                 </label>
                 <div className="input-wrapper">
-                  <span className="input-icon-left">
-                    <Mail size={18} />
-                  </span>
+                  <Mail size={16} className="input-icon" />
                   <input
-                    id="login-email"
+                    id="email-input"
                     type="email"
-                    className={`form-input ${errors.email ? 'has-error' : ''}`}
+                    className={`input-field ${errors.email ? 'input-error' : ''}`}
                     placeholder="name@eventsphere.com"
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
-                      if (errors.email) setErrors((prev) => ({ ...prev, email: null }));
+                      if (errors.email) setErrors({ ...errors, email: null });
                     }}
-                    autoComplete="email"
-                    required
                     disabled={isLoading}
+                    autoComplete="email"
                   />
                 </div>
                 {errors.email && (
-                  <p id="email-error" className="input-error-msg" role="alert">
-                    <AlertCircle size={14} />
-                    {errors.email}
-                  </p>
+                  <span className="form-field-error">{errors.email}</span>
                 )}
               </div>
 
-              {/* Password Input */}
+              {/* Password */}
               <div className="form-group">
-                <label htmlFor="login-password" className="form-label">
+                <label className="form-label" htmlFor="password-input">
                   Password
                 </label>
                 <div className="input-wrapper">
-                  <span className="input-icon-left">
-                    <Lock size={18} />
-                  </span>
+                  <Lock size={16} className="input-icon" />
                   <input
-                    id="login-password"
+                    id="password-input"
                     type={showPassword ? 'text' : 'password'}
-                    className={`form-input ${errors.password ? 'has-error' : ''}`}
+                    className={`input-field ${errors.password ? 'input-error' : ''}`}
                     placeholder="••••••••••••"
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
-                      if (errors.password) setErrors((prev) => ({ ...prev, password: null }));
+                      if (errors.password) setErrors({ ...errors, password: null });
                     }}
-                    autoComplete="current-password"
-                    required
                     disabled={isLoading}
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"
                     className="password-toggle-btn"
-                    onClick={() => setShowPassword((prev) => !prev)}
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    title={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
                 {errors.password && (
-                  <p id="password-error" className="input-error-msg" role="alert">
-                    <AlertCircle size={14} />
-                    {errors.password}
-                  </p>
+                  <span className="form-field-error">{errors.password}</span>
                 )}
               </div>
 
               {/* Options */}
-              <div className="form-options">
-                <label className="remember-checkbox-label">
+              <div className="login-options">
+                <label className="checkbox-label">
                   <input
                     type="checkbox"
-                    id="remember-me"
-                    className="remember-checkbox"
+                    className="checkbox-input"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                     disabled={isLoading}
                   />
-                  <span>Remember me</span>
+                  <span>Remember session</span>
                 </label>
 
                 <button
                   type="button"
-                  className="forgot-password-link"
+                  className="forgot-link"
                   onClick={() => setIsForgotModalOpen(true)}
                   disabled={isLoading}
                 >
@@ -315,17 +302,15 @@ export default function LoginPage() {
                 </button>
               </div>
 
-              {/* Submit Button */}
+              {/* Submit */}
               <button
                 type="submit"
-                id="login-submit-button"
                 className="submit-btn"
                 disabled={isLoading}
-                aria-busy={isLoading}
               >
                 {isLoading ? (
                   <>
-                    <span className="spinner" aria-hidden="true" />
+                    <div className="spinner" />
                     <span>Signing in...</span>
                   </>
                 ) : (
@@ -333,7 +318,7 @@ export default function LoginPage() {
                 )}
               </button>
             </form>
-          </main>
+          </div>
         </div>
       </div>
 
