@@ -218,6 +218,16 @@ export default function AppLayout({ children, title, subtitle }) {
                 {user?.role}
               </span>
             </div>
+            <button
+              type="button"
+              className="btn-secondary"
+              style={{ height: '34px', padding: '0 0.85rem', fontSize: '0.8rem', gap: '0.4rem', color: 'var(--color-danger)', borderColor: 'var(--color-danger-border)' }}
+              onClick={handleLogout}
+              title="Sign Out to Login Page"
+            >
+              <LogOut size={14} />
+              <span>Sign Out</span>
+            </button>
           </div>
         </header>
 

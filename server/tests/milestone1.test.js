@@ -14,7 +14,10 @@ describe('EventSphere Milestone 1: Event, Venue, Resource & Conflict Engine', ()
   const organizerPassword = 'OrgPassword123!';
 
   beforeAll(async () => {
-    // Create Organizer user for testing
+    // Clean up any residual test records from prior runs
+    await pool.query('DELETE FROM events WHERE title LIKE \'TechFest%\' OR title LIKE \'Grand%\' OR title LIKE \'AI Conf%\'');
+    await pool.query('DELETE FROM venues WHERE venue_code = \'TEST_V01\'');
+    await pool.query('DELETE FROM resources WHERE resource_code = \'TEST_R01\'');
     await pool.query('DELETE FROM users WHERE email = $1', [organizerEmail]);
     const hash = await bcrypt.hash(organizerPassword, 10);
     const userRes = await pool.query(
